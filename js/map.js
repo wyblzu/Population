@@ -146,7 +146,7 @@ function createHeatMap() {
 function loadArcGISCacheLayer() {
     var layer = new ol.layer.Tile({
         source: new ol.source.XYZ({
-            projection: 'EPSG:4326',
+            projection: 'EPSG:3857',
             maxZoom: 15,
             minZoom:3,
             tileUrlFunction: function (tileCoord) {
@@ -165,32 +165,43 @@ function loadArcGISCacheLayer() {
     layer.set('title', 'ArcGIS热力图');
     return layer;
 }
-
+//加载天地图离线影像瓦片
 function loadImageTile() {
+    var projection = ol.proj.get("EPSG:4326");
+    var projectionExtent = [ -180, -90, 180, 90 ];
+    var maxResolution = (ol.extent.getWidth(projectionExtent) / (256 * 2));
+    var resolutions = new Array(19);
+    for (var z = 0; z < 19; ++z) {
+        resolutions[z] = maxResolution / Math.pow(2, z);
+    }
+    var tileOrigin = ol.extent.getTopLeft(projectionExtent);
     var layer = new ol.layer.Tile({
         source: new ol.source.XYZ({
-            projection: 'EPSG:3857',
-            maxZoom: 15,
-            minZoom:3,
+            maxZoom: 18,
+            minZoom:1,
             tileUrlFunction: function (tileCoord) {
-                var oo = "00000000";
-                var zz = tileCoord[0];
-                //小于10级前面补个0
-                var z = "L" + (zz < 10?("0" + zz):zz);
-                var xx = tileCoord[1].toString(16);
-                var x = "C" + oo.substring(0, 8 - xx.length) + xx;
-                var yy = (-tileCoord[2] - 1).toString(16); //注意此处，计算方式变了
-                var y = "R" + oo.substring(0, 8 - yy.length) + yy;
-                return './data/tile/' + z + '/' + y + '/' + x + '.png';
-            }
+                var z = tileCoord[0]+1;
+                var x = tileCoord[1];
+                var y = -tileCoord[2]-1;
+                var n = Math.pow(2, z + 1);
+                x = x % n;
+                if (x * n < 0) {
+                    x = x + n;
+                }
+                return './data/tile/' + z + '/' + x + '/' + y + '.png';
+            },
+            projection: projection,
+            tileSize: 256,
+            tileGrid: new ol.tilegrid.TileGrid({
+                origin: tileOrigin,
+                resolutions: resolutions,
+                tileSize: 256
+            })
         })
     });
     layer.set('title', '影像');
     return layer;
 }
-
-
-
 //获取count的最大值
 function maxCount(data) {
     var weight = [];
