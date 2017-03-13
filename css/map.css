@@ -4,3 +4,16 @@
     font-size: 14px;
     position: absolute;
 }
+#mousePosition {
+    position: absolute;
+    z-index: 1000;
+    right: 0;
+    bottom: 0;
+    width: 130px;
+    height: 25px;
+    padding-top: 7px;
+    padding-left: 3px;
+    background-color: #eeeeee;
+    border-radius: 5px 0 0 5px;
+    text-align: center;
+}
